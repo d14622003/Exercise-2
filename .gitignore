@@ -114,19 +114,13 @@ Thumbs.db
 
 
 
-# Output files
-
-outputs/*.png
-
-outputs/*.jpg
-
-outputs/*.pdf
-
-outputs/*.html
-
-outputs/*.json
-
-outputs/*.csv
+# Output files (commented out - allow analysis results)
+# outputs/*.png
+# outputs/*.jpg
+# outputs/*.pdf
+# outputs/*.html
+# outputs/*.json
+# outputs/*.csv
 
 
 
