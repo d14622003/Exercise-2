@@ -48,13 +48,37 @@ class CWAWeatherAPI:
         stations = []
         records = data['records']['Station']
         
+        # 檢查第一個測站的座標結構
+        if len(records) > 0:
+            first_record = records[0]
+            print("=== 座標資料結構分析 ===")
+            if 'GeoInfo' in first_record and 'Coordinates' in first_record['GeoInfo']:
+                coords = first_record['GeoInfo']['Coordinates']
+                print(f"座標陣列長度: {len(coords)}")
+                for i, coord in enumerate(coords):
+                    print(f"座標 {i}: {coord}")
+                print()
+        
         for record in records:
             try:
+                # 獲取兩組座標
+                coord1 = record['GeoInfo']['Coordinates'][0] if len(record['GeoInfo']['Coordinates']) > 0 else None
+                coord2 = record['GeoInfo']['Coordinates'][1] if len(record['GeoInfo']['Coordinates']) > 1 else None
+                
                 station_info = {
                     'station_id': record['StationId'],
                     'station_name': record['StationName'],
-                    'latitude': float(record['GeoInfo']['Coordinates'][1]['StationLatitude']),  # 使用 WGS84 座標
-                    'longitude': float(record['GeoInfo']['Coordinates'][1]['StationLongitude']),
+                    # 第一組座標
+                    'latitude_1': float(coord1['StationLatitude']) if coord1 and coord1.get('StationLatitude') else None,
+                    'longitude_1': float(coord1['StationLongitude']) if coord1 and coord1.get('StationLongitude') else None,
+                    'coord1_name': coord1.get('StationName', '') if coord1 else '',
+                    # 第二組座標 (WGS84)
+                    'latitude_2': float(coord2['StationLatitude']) if coord2 and coord2.get('StationLatitude') else None,
+                    'longitude_2': float(coord2['StationLongitude']) if coord2 and coord2.get('StationLongitude') else None,
+                    'coord2_name': coord2.get('StationName', '') if coord2 else '',
+                    # 保持原有欄位以相容現有程式碼
+                    'latitude': float(coord2['StationLatitude']) if coord2 and coord2.get('StationLatitude') else None,
+                    'longitude': float(coord2['StationLongitude']) if coord2 and coord2.get('StationLongitude') else None,
                     'temperature': float(record['WeatherElement']['AirTemperature']) if record['WeatherElement']['AirTemperature'] else None,
                     'humidity': float(record['WeatherElement']['RelativeHumidity']) if record['WeatherElement']['RelativeHumidity'] else None,
                     'observation_time': record['ObsTime']['DateTime'],
