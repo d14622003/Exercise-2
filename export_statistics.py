@@ -1,9 +1,10 @@
 import csv
 import math
 import os
+from datetime import datetime
 
-def show_analysis_summary():
-    """顯示分析結果摘要"""
+def export_statistics_to_csv():
+    """匯出統計結果到 CSV 檔案"""
     
     # 查找最新的分析結果檔案
     output_dir = "outputs"
@@ -42,87 +43,7 @@ def show_analysis_summary():
     # 計算統計資料
     distances = [s['distance_meters'] for s in stations]
     
-    print("\n" + "="*60)
-    print("氣象站坐標差距統計分析")
-    print("="*60)
-    
-    print(f"\n基本統計:")
-    print(f"  測站總數: {len(stations)}")
-    print(f"  平均距離: {sum(distances)/len(distances):.2f} 公尺")
-    print(f"  中位數距離: {sorted(distances)[len(distances)//2]:.2f} 公尺")
-    print(f"  最小距離: {min(distances):.2f} 公尺")
-    print(f"  最大距離: {max(distances):.2f} 公尺")
-    
-    # 計算標準差
-    mean_dist = sum(distances) / len(distances)
-    variance = sum((d - mean_dist) ** 2 for d in distances) / len(distances)
-    std_dev = math.sqrt(variance)
-    print(f"  標準差: {std_dev:.2f} 公尺")
-    
-    # 分位數
-    sorted_distances = sorted(distances)
-    n = len(sorted_distances)
-    percentiles = [25, 50, 75, 90, 95, 99]
-    print(f"\n距離分位數:")
-    for p in percentiles:
-        idx = int((p / 100) * n)
-        if idx >= n:
-            idx = n - 1
-        print(f"  {p}%: {sorted_distances[idx]:.2f} 公尺")
-    
-    # 分類統計
-    categories = [
-        ('< 100公尺', 0, 100),
-        ('100-500公尺', 100, 500),
-        ('500-1000公尺', 500, 1000),
-        ('1-5公里', 1000, 5000),
-        ('> 5公里', 5000, float('inf'))
-    ]
-    
-    print(f"\n距離分類:")
-    for category, min_dist, max_dist in categories:
-        if max_dist == float('inf'):
-            count = sum(1 for d in distances if d >= min_dist)
-        else:
-            count = sum(1 for d in distances if min_dist <= d < max_dist)
-        percentage = (count / len(stations)) * 100
-        print(f"  {category}: {count} 個測站 ({percentage:.1f}%)")
-    
-    # 按距離排序
-    stations.sort(key=lambda x: x['distance_meters'], reverse=True)
-    
-    print(f"\n差距最大的前10個測站:")
-    for i, station in enumerate(stations[:10], 1):
-        print(f"  {i}. {station['station_name']}: {station['distance_meters']:.2f} 公尺 ({station['distance_km']:.3f} 公里)")
-    
-    print(f"\n差距最小的前10個測站:")
-    for i, station in enumerate(stations[-10:], 1):
-        print(f"  {i}. {station['station_name']}: {station['distance_meters']:.2f} 公尺")
-    
-    # 檢查坐標系統名稱
-    coord1_names = set(s['coord1_name'] for s in stations)
-    coord2_names = set(s['coord2_name'] for s in stations)
-    
-    print(f"\n坐標系統名稱:")
-    print(f"  坐標系1: {coord1_names}")
-    print(f"  坐標系2: {coord2_names}")
-    
-    # 檢查地圖檔案
-    map_files = [f for f in os.listdir(output_dir) if f.startswith('dual_coordinate_map_') and f.endswith('.html')]
-    if map_files:
-        latest_map = max(map_files, key=lambda x: os.path.getmtime(os.path.join(output_dir, x)))
-        print(f"\n互動式地圖檔案: outputs/{latest_map}")
-        print("可以在瀏覽器中開啟此檔案查看雙坐標系統地圖")
-    
-    # 輸出統計結果到 CSV
-    export_statistics_to_csv(distances, stations, coord1_names, coord2_names)
-    
-    print("\n分析完成!")
-
-def export_statistics_to_csv(distances, stations, coord1_names, coord2_names):
-    """將統計結果匯出到 CSV 檔案"""
-    from datetime import datetime
-    
+    # 生成統計檔案
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     stats_file = f"outputs/coordinate_statistics_{timestamp}.csv"
     
@@ -201,14 +122,23 @@ def export_statistics_to_csv(distances, stations, coord1_names, coord2_names):
             writer.writerow([])  # 空行
             
             # 坐標系統資訊
+            coord1_names = set(s['coord1_name'] for s in stations)
+            coord2_names = set(s['coord2_name'] for s in stations)
             writer.writerow(['坐標系統資訊'])
             writer.writerow(['坐標系統1', list(coord1_names)[0] if coord1_names else '未知'])
             writer.writerow(['坐標系統2', list(coord2_names)[0] if coord2_names else '未知'])
         
         print(f"\n統計結果已匯出至: {stats_file}")
         
+        # 顯示基本統計
+        print("\n基本統計摘要:")
+        print(f"  測站總數: {len(stations)}")
+        print(f"  平均距離: {sum(distances)/len(distances):.2f} 公尺")
+        print(f"  最小距離: {min(distances):.2f} 公尺")
+        print(f"  最大距離: {max(distances):.2f} 公尺")
+        
     except Exception as e:
         print(f"匯出統計結果失敗: {e}")
 
 if __name__ == "__main__":
-    show_analysis_summary()
+    export_statistics_to_csv()
